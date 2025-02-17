@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizza Night at Artem</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
+        form { max-width: 400px; margin: auto; }
+        label, select, input { display: block; width: 100%; margin-bottom: 10px; }
+        button { background: green; color: white; padding: 10px; border: none; cursor: pointer; }
+        .error { color: red; font-weight: bold; }
+        img { max-width: 100%; height: auto; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <img src="/mnt/data/000041 (1).JPG" alt="Pizza Night at Artem">
+    <h2>Pizza Night at Artem</h2>
+    <p>
+        🗓 When: Sunday, 2nd March, starting at 5PM - 7:30PM<br>
+        📍 Where: Artem Café, 769 Canning Hwy, Applecross (access via Post Lane just off Kearns Crescent)<br>
+        <strong>BOOKINGS ARE ESSENTIAL</strong><br>
+        Curated alcoholic Drinks will be available at the counter. Strictly No BYO<br>
+        Can't wait to see you there.
+    </p>
+    
+    <form id="bookingForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        
+        <label for="contact">Contact Number:</label>
+        <input type="text" id="contact" name="contact" required>
+        
+        <label for="partySize">Party Size (Max 4):</label>
+        <input type="number" id="partySize" name="partySize" min="1" max="4" required>
+        
+        <label for="timeSlot">Select Time Slot:</label>
+        <select id="timeSlot" name="timeSlot" required>
+        </select>
+        
+        <p id="errorMessage" class="error"></p>
+        
+        <button type="submit">Submit Booking</button>
+    </form>
+    
+    <h3>Booking List</h3>
+    <div id="bookingContainer"></div>
+    
+    <script>
+        const bookings = [];
+        const maxSeats = {
+            "6:30 PM - 7:30 PM": 8,
+            "6:00 PM - 7:00 PM": 22,
+            "5:30 PM - 6:30 PM": 22,
+            "5:00 PM - 6:00 PM": 22
+        };
+        
+        const timeSlotSelect = document.getElementById('timeSlot');
+        function updateTimeSlots() {
+            timeSlotSelect.innerHTML = '';
+            Object.keys(maxSeats).forEach(slot => {
+                const totalSeatsBooked = bookings.filter(b => b.timeSlot === slot)
+                    .reduce((sum, b) => sum + b.partySize, 0);
+                const seatsRemaining = maxSeats[slot] - totalSeatsBooked;
+                const option = document.createElement('option');
+                option.value = slot;
+                option.textContent = `${slot} (${seatsRemaining} seats remaining)`;
+                option.disabled = seatsRemaining <= 0;
+                timeSlotSelect.appendChild(option);
+            });
+        }
+        
+        document.getElementById('bookingForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const contact = document.getElementById('contact').value;
+            const partySize = parseInt(document.getElementById('partySize').value);
+            const timeSlot = document.getElementById('timeSlot').value;
+            const errorMessage = document.getElementById('errorMessage');
+            
+            const totalSeatsBooked = bookings.filter(b => b.timeSlot === timeSlot)
+                .reduce((sum, b) => sum + b.partySize, 0);
+            const seatsRemaining = maxSeats[timeSlot] - totalSeatsBooked;
+            
+            if (seatsRemaining < partySize) {
+                errorMessage.textContent = 'Not enough seats available for this time slot. Please choose another.';
+                return;
+            } else {
+                errorMessage.textContent = '';
+            }
+            
+            const booking = { name, contact, partySize, timeSlot };
+            bookings.push(booking);
+            
+            updateBookingList();
+            updateTimeSlots();
+            alert('Booking confirmed!');
+            this.reset();
+        });
+        
+        function updateBookingList() {
+            const bookingContainer = document.getElementById('bookingContainer');
+            bookingContainer.innerHTML = '';
+            
+            const groupedBookings = {};
+            bookings.forEach(b => {
+                if (!groupedBookings[b.timeSlot]) {
+                    groupedBookings[b.timeSlot] = [];
+                }
+                groupedBookings[b.timeSlot].push(b);
+            });
+            
+            Object.keys(groupedBookings).sort().forEach(timeSlot => {
+                const slotDiv = document.createElement('div');
+                slotDiv.innerHTML = `<h4>${timeSlot}</h4>`;
+                
+                groupedBookings[timeSlot]
+                    .sort((a, b) => b.partySize - a.partySize)
+                    .forEach(b => {
+                        const listItem = document.createElement('p');
+                        listItem.textContent = `${b.name} - ${b.contact} - ${b.partySize} guests`;
+                        slotDiv.appendChild(listItem);
+                    });
+                
+                bookingContainer.appendChild(slotDiv);
+            });
+        }
+        
+        updateTimeSlots();
+    </script>
+</body>
+</html>
